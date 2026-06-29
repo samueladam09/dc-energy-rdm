@@ -1,17 +1,22 @@
 import streamlit as st
-from config import CONFIG_TABLE, STRATEGY_USES, DATA_PATH
+from config import CONFIG_TABLE, STRATEGY_USES, get_data_path
 from data_loader import query_data, resolve_config_ids
 from sidebar_ui import render_sidebar
 from parcoords_component import parcoords_chart
 
-# ── Page config ──────────────────────────────────────────────────────────────
+# ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="DC Energy RDM",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# ── Session state init ───────────────────────────────────────────────────────
+# ── Cache the data path so HuggingFace download only happens once ─────────────
+@st.cache_resource(show_spinner="Loading simulation data...")
+def cached_data_path():
+    return get_data_path()
+
+# ── Session state init ────────────────────────────────────────────────────────
 if "df" not in st.session_state:
     st.session_state.df = None
 if "row_count" not in st.session_state:
@@ -19,10 +24,10 @@ if "row_count" not in st.session_state:
 if "last_filters" not in st.session_state:
     st.session_state.last_filters = None
 
-# ── Sidebar ──────────────────────────────────────────────────────────────────
+# ── Sidebar ───────────────────────────────────────────────────────────────────
 filters = render_sidebar()
 
-# ── On Apply ─────────────────────────────────────────────────────────────────
+# ── On Apply ──────────────────────────────────────────────────────────────────
 if filters["apply"]:
     config_ids = resolve_config_ids(
         selected_strategies=filters["selected_strategies"],
@@ -37,7 +42,7 @@ if filters["apply"]:
         st.error("No configurations match your selections. Adjust the Physical Levers.")
     else:
         df = query_data(
-            parquet_path=DATA_PATH,
+            parquet_path=cached_data_path(),
             location=filters["location"],
             load_profile=filters["load_profile"],
             discount_rate=filters["discount_rate"],
@@ -52,11 +57,11 @@ if filters["apply"]:
         st.session_state.row_count = len(df)
         st.session_state.last_filters = filters
 
-# ── Display ──────────────────────────────────────────────────────────────────
+# ── Display ───────────────────────────────────────────────────────────────────
 if st.session_state.df is not None:
-    df   = st.session_state.df
-    n    = st.session_state.row_count
-    f    = st.session_state.last_filters
+    df = st.session_state.df
+    n  = st.session_state.row_count
+    f  = st.session_state.last_filters
 
     st.success(f"**{n:,} scenarios** loaded")
 
@@ -83,12 +88,10 @@ if st.session_state.df is not None:
         "Grid_Buy_Price", "Grid_Export_Price", "Grid_Carbon_Intensity",
     ]
 
-    lease_range = f["revenue_structure"]
-
     payload = {
-        "rows":            df[PLOT_COLS].to_dict(orient="records"),
-        "irr_min":         0,
-        "irr_max":         20,
+        "rows":             df[PLOT_COLS].to_dict(orient="records"),
+        "irr_min":          0,
+        "irr_max":          20,
         "lease_axis_range": [75, 175] if f["revenue_structure"] == "Pass-Through" else [100, 200],
     }
 

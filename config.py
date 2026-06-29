@@ -7,7 +7,6 @@ DATA_PATH = os.getenv(
 )
 
 # ── Config ID Master Table ───────────────────────────────────────────────────
-# (Config_ID, Strategy, Solar_MW, Wind_MW, BESS_Power_MW, BESS_Energy_MWh)
 CONFIG_TABLE = [
     ("None", "Grid-Only",         0,   0,   0,   0),
     ("A1",   "Grid-PV",         100,   0,   0,   0),
@@ -68,7 +67,6 @@ STRATEGY_ORDER = [
     "Grid-PV-Wind-BESS",
 ]
 
-# Which components each strategy uses
 STRATEGY_USES = {
     "Grid-Only":         {"pv": False, "wind": False, "bess": False},
     "Grid-PV":           {"pv": True,  "wind": False, "bess": False},
@@ -87,14 +85,14 @@ LEASE_RATE_RANGES = {
 
 # ── Uncertainty Parameter Ranges ─────────────────────────────────────────────
 UNCERTAINTY_RANGES = {
-    "DC_Shell_CAPEX":        {"label": "DC Shell CAPEX",        "unit": "£/MW",        "min": 8000,  "max": 12000, "step": 100,  "fmt": ",.0f"},
-    "Solar_PV_CAPEX":        {"label": "Solar PV CAPEX",        "unit": "£/MW",        "min": 500,   "max": 850,   "step": 10,   "fmt": ",.0f"},
-    "Wind_CAPEX":            {"label": "Wind CAPEX",            "unit": "£/MW",        "min": 1100,  "max": 1800,  "step": 10,   "fmt": ",.0f"},
-    "BESS_Power_CAPEX":      {"label": "BESS Power CAPEX",      "unit": "£/MW",        "min": 400,   "max": 750,   "step": 10,   "fmt": ",.0f"},
-    "BESS_Energy_CAPEX":     {"label": "BESS Energy CAPEX",     "unit": "£/MWh",       "min": 160,   "max": 280,   "step": 5,    "fmt": ",.0f"},
-    "Grid_Buy_Price":        {"label": "Grid Buy Price",        "unit": "£/MWh",       "min": 80,    "max": 150,   "step": 1,    "fmt": ",.0f"},
-    "Grid_Export_Price":     {"label": "Grid Export Price",     "unit": "£/MWh",       "min": 40,    "max": 75,    "step": 1,    "fmt": ",.0f"},
-    "Grid_Carbon_Intensity": {"label": "Grid Carbon Intensity", "unit": "kgCO₂e/kWh",  "min": 0.05,  "max": 0.13,  "step": 0.01, "fmt": ".2f"},
+    "DC_Shell_CAPEX":        {"label": "DC Shell CAPEX",        "unit": "£/MW",       "min": 8000,  "max": 12000, "step": 100,  "fmt": ",.0f"},
+    "Solar_PV_CAPEX":        {"label": "Solar PV CAPEX",        "unit": "£/MW",       "min": 500,   "max": 850,   "step": 10,   "fmt": ",.0f"},
+    "Wind_CAPEX":            {"label": "Wind CAPEX",            "unit": "£/MW",       "min": 1100,  "max": 1800,  "step": 10,   "fmt": ",.0f"},
+    "BESS_Power_CAPEX":      {"label": "BESS Power CAPEX",      "unit": "£/MW",       "min": 400,   "max": 750,   "step": 10,   "fmt": ",.0f"},
+    "BESS_Energy_CAPEX":     {"label": "BESS Energy CAPEX",     "unit": "£/MWh",      "min": 160,   "max": 280,   "step": 5,    "fmt": ",.0f"},
+    "Grid_Buy_Price":        {"label": "Grid Buy Price",        "unit": "£/MWh",      "min": 80,    "max": 150,   "step": 1,    "fmt": ",.0f"},
+    "Grid_Export_Price":     {"label": "Grid Export Price",     "unit": "£/MWh",      "min": 40,    "max": 75,    "step": 1,    "fmt": ",.0f"},
+    "Grid_Carbon_Intensity": {"label": "Grid Carbon Intensity", "unit": "kgCO₂e/kWh", "min": 0.05,  "max": 0.13,  "step": 0.01, "fmt": ".2f"},
 }
 
 # ── Fixed Axis Ranges for Plot ───────────────────────────────────────────────
@@ -114,3 +112,34 @@ DISCOUNT_RATE_BOUNDS = {
     0.10: (0.099, 0.101),
     0.12: (0.119, 0.121),
 }
+
+# ── Data path resolver — works locally and on Streamlit Cloud ────────────────
+def get_data_path() -> str:
+    """
+    Local dev  → uses the hardcoded OneDrive path directly
+    Cloud      → downloads from HuggingFace Hub once, caches in /tmp
+    """
+    # Local: file exists on disk
+    if os.path.exists(DATA_PATH):
+        return DATA_PATH
+
+    # Cloud: download from HuggingFace
+    try:
+        from huggingface_hub import hf_hub_download
+        import streamlit as st
+
+        print("Downloading parquet from HuggingFace Hub...")
+        local_file = hf_hub_download(
+            repo_id   = st.secrets["samueladam09/dc-energy-rdm-data"],
+            filename  = st.secrets["20260628_Simulation_Results_Run1.parquet"],
+            repo_type = "dataset",
+            token     = st.secrets["HF_TOKEN"],
+            cache_dir = "/tmp/dc_energy_data",
+        )
+        print(f"Downloaded to: {local_file}")
+        return local_file
+
+    except Exception as e:
+        raise FileNotFoundError(
+            f"Parquet file not found locally and HuggingFace download failed: {e}"
+        )
