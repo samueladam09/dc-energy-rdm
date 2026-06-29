@@ -119,19 +119,17 @@ def get_data_path() -> str:
     Local dev  → uses the hardcoded OneDrive path directly
     Cloud      → downloads from HuggingFace Hub once, caches in /tmp
     """
-    # Local: file exists on disk
     if os.path.exists(DATA_PATH):
         return DATA_PATH
 
-    # Cloud: download from HuggingFace
     try:
         from huggingface_hub import hf_hub_download
         import streamlit as st
 
         print("Downloading parquet from HuggingFace Hub...")
         local_file = hf_hub_download(
-            repo_id   = st.secrets["samueladam09/dc-energy-rdm-data"],
-            filename  = st.secrets["20260628_Simulation_Results_Run1.parquet"],
+            repo_id   = st.secrets["HF_REPO_ID"],
+            filename  = st.secrets["HF_FILENAME"],
             repo_type = "dataset",
             token     = st.secrets["HF_TOKEN"],
             cache_dir = "/tmp/dc_energy_data",
