@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parallel Coordinates</title>
+
+  <!-- D3 v7 -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="tooltip" class="tooltip hidden"></div>
+  <div id="chart"></div>
+
+  <script>
+    // ── Streamlit component handshake (inline, no CDN needed) ──────────────
+    function sendMessageToStreamlitClient(type, data) {
+      const outData = Object.assign({ isStreamlitMessage: true, type }, data);
+      window.parent.postMessage(outData, "*");
+    }
+
+    function init() {
+      sendMessageToStreamlitClient("streamlit:componentReady", { apiVersion: 1 });
+    }
+
+    function setFrameHeight(height) {
+      sendMessageToStreamlitClient("streamlit:setFrameHeight", { height });
+    }
+
+    // Listen for data from Python
+    window.addEventListener("message", function (event) {
+      if (
+        event.data.type === "streamlit:render" &&
+        event.data.args &&
+        event.data.args.payload
+      ) {
+        const payload = event.data.args.payload;
+        const height  = event.data.args.height || 720;
+        render(payload, height);
+        setFrameHeight(height);
+      }
+    });
+
+    // Tell Streamlit we are ready
+    window.addEventListener("load", function () {
+      init();
+    });
+  </script>
+
+  <script src="main.js"></script>
+</body>
+</html>
