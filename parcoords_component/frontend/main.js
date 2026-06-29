@@ -47,7 +47,7 @@ function render(payload, height) {
     { key: "IRR_pct",               label: "IRR",              unit: "%",       type: "linear", section: "financial",   min: irr_min, max: irr_max },
     { key: "NPV_M",                 label: "NPV",              unit: "£M",      type: "linear", section: "financial",   min: -800,    max: 800     },
     { key: "Load_Served_by_RE_pct", label: "RE Load Served",  unit: "%",       type: "linear", section: "operational", min: 0,       max: 100     },
-    { key: "RE_LCOE_per_MWh",       label: "RE LCOE",         unit: "£/MWh",   type: "linear", section: "operational", min: 0,       max: 500     },
+    { key: "RE_LCOE_per_MWh",       label: "RE LCOE",         unit: "£/MWh",   type: "linear", section: "operational", min: 0,       max: 300     },
     { key: "Lifetime_Carbon_tCO2e", label: "Lifetime Carbon", unit: "tCO₂e",   type: "linear", section: "operational", min: 0,       max: 1500000 },
   ];
 
