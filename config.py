@@ -102,7 +102,7 @@ AXIS_RANGES = {
     "IRR_pct":               (0,    20),
     "NPV_M":                 (-800, 800),
     "Load_Served_by_RE_pct": (0,    100),
-    "RE_LCOE_per_MWh":       (0,    500),
+    "RE_LCOE_per_MWh":       (0,    400),
     "Lifetime_Carbon_tCO2e": (0,    1_500_000),
 }
 
